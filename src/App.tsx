@@ -1,34 +1,62 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
 import './App.css'
+import { STEPS_COUNT, Track } from "./steps";
 
-function App() {
-  const [count, setCount] = useState(0)
+const presets: Track[] = [
+  {name: "Yell", stepsOn: []},
+  {name: "Cough", stepsOn: []},
+  {name: "Sneeze", stepsOn: []},
+  {name: "Fart", stepsOn: []},
+]
+
+export default function App() {
+  const [tracks, setTracks] = useState<Track[]>(presets);
+
+  const handleUpdateTrack = (trackIndex: number, updatedTrack: Track) => {
+    setTracks(previousTracks => {
+      return previousTracks.map((track, i) => {
+        if (i === trackIndex) {
+          return updatedTrack;
+        }
+        return track;
+      })
+    })
+
+  }
 
   return (
     <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {tracks.map((track, i) =>
+        <TrackDisplay updateTrack={(nextTrack) => handleUpdateTrack(i, nextTrack)} track={track} />
+      )}
     </div>
   )
 }
 
-export default App
+function TrackDisplay({ track, updateTrack }: { track: Track; updateTrack: (nextTrack: Track) => void }) {
+  const handleToggle = (index: number) => {
+    const updatedTrack = { ...track };
+    const updatedSteps = track.stepsOn.includes(index)
+      ? track.stepsOn.filter(i => i !== index)
+      : track.stepsOn.concat(index);
+
+    updatedTrack.stepsOn = updatedSteps;
+
+    updateTrack(updatedTrack)
+  }
+
+  return (
+    <div key={track.name}>
+      <h4>{track.name}</h4>
+      <div className={"cell-container"}>
+        {Array.from({ length: STEPS_COUNT }, (_, i) =>
+          <Step key={i} on={track.stepsOn.includes(i)} toggleOn={() => handleToggle(i)} />)
+        }
+      </div>
+    </div>
+  )
+}
+
+function Step({ on, toggleOn }: { on: boolean; toggleOn: () => void }) {
+  return <button onClick={toggleOn} className={`cell ${on ? "on" : "off"}`} />
+}
